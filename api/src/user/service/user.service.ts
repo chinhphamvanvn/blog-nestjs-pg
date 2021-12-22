@@ -11,7 +11,7 @@ export class UserService {
     constructor(
         @InjectRepository(UserEntity) private readonly userRepository: Repository<UserEntity>,
         private authService: AuthService
-    ) {}
+    ) { }
 
     create(user: User): Observable<User> {
         return this.authService.hashPassword(user.password).pipe(
@@ -24,7 +24,7 @@ export class UserService {
 
                 return from(this.userRepository.save(newUser)).pipe(
                     map((user: User) => {
-                        const { password, ...result} = user;
+                        const { password, ...result } = user;
                         return result;
                     }),
                     catchError(err => throwError(err))
@@ -34,13 +34,19 @@ export class UserService {
     }
 
     findOne(id: number): Observable<User> {
-        return from(this.userRepository.findOne({id}));
+        return from(this.userRepository.findOne({ id })).pipe(
+            map((user: User) => {
+                console.log(user)
+                const {password, ...result} = user;
+                return result;
+            })
+        );
     }
 
     findAll(): Observable<User[]> {
         return from(this.userRepository.find()).pipe(
             map((users: User[]) => {
-                users.forEach(function (v) {delete v.password});
+                users.forEach(function (v) { delete v.password });
                 return users;
             })
         )
@@ -59,7 +65,7 @@ export class UserService {
     login(user: User): Observable<string> {
         return this.validateUser(user.email, user.password).pipe(
             switchMap((user: User) => {
-                if(user) {
+                if (user) {
                     return this.authService.generateJWT(user).pipe(map((jwt: string) => jwt));
                 } else {
                     return 'Wrong Credentials';
@@ -70,20 +76,26 @@ export class UserService {
 
     validateUser(email: string, password: string): Observable<User> {
         return this.findByMail(email).pipe(
-            switchMap((user: User) => this.authService.comparePasswords(password, user.password).pipe(
-                map((match: boolean) => {
-                    if(match) {
-                        const {password, ...result} = user;
-                        return result;
-                    } else {
-                        throw Error;
-                    }
-                })
-            ))
+            switchMap((user: User) => {
+                return this.authService.comparePasswords(password, user.password).pipe(
+                    map((match: boolean) => {
+                        if (match) {
+                            const { password, ...result } = user;
+                            return result;
+                        } else {
+                            throw Error;
+                        }
+                    })
+                )
+            })
         )
     }
 
     findByMail(email: string): Observable<User> {
-        return from(this.userRepository.findOne({email}))
+        return from(this.userRepository.findOne({ email }));
+    }
+
+    updateRoleOfUser(id: number, user: User): Observable<any> {
+        return from(this.userRepository.update(id, user));
     }
 }
