@@ -1,6 +1,7 @@
 - Create project: nest new api
 - Config nest module: npm i --save @nestjs/config
 - TypeOrm: npm install --save @nestjs/typeorm typeorm pg
+Or: npm install --save @nestjs/typeorm typeorm mysql2
 - Task 1
 + git flow init -f
 + git flow feature start video-01
@@ -19,3 +20,5 @@
         "email": "chinhphamvanvn@gmail.com",
         "password": "12345678"
     }
+
+- paginate: npm i nestjs-typeorm-paginate

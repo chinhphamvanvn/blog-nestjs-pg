@@ -1,10 +1,15 @@
 import { AuthService } from 'src/auth/services/auth.service';
-import { User } from './../models/user.interface';
+import { User, UserRole } from './../models/user.interface';
 import { UserEntity } from './../models/user.entity';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { catchError, from, map, Observable, switchMap, throwError } from 'rxjs';
+import {
+    paginate,
+    Pagination,
+    IPaginationOptions,
+} from 'nestjs-typeorm-paginate';
 
 @Injectable()
 export class UserService {
@@ -21,6 +26,7 @@ export class UserService {
                 newUser.username = user.username;
                 newUser.email = user.email;
                 newUser.password = passwordHash;
+                newUser.role = UserRole.USER;
 
                 return from(this.userRepository.save(newUser)).pipe(
                     map((user: User) => {
@@ -36,8 +42,7 @@ export class UserService {
     findOne(id: number): Observable<User> {
         return from(this.userRepository.findOne({ id })).pipe(
             map((user: User) => {
-                console.log(user)
-                const {password, ...result} = user;
+                const { password, ...result } = user;
                 return result;
             })
         );
@@ -59,6 +64,7 @@ export class UserService {
     updateOne(id: number, user: User): Observable<any> {
         delete user.email;
         delete user.password;
+        delete user.role;
         return from(this.userRepository.update(id, user));
     }
 
@@ -97,5 +103,14 @@ export class UserService {
 
     updateRoleOfUser(id: number, user: User): Observable<any> {
         return from(this.userRepository.update(id, user));
+    }
+
+    paginate(options: IPaginationOptions): Observable<Pagination<User>> {
+        return from(paginate<User>(this.userRepository, options)).pipe(
+            map((usersPageable: Pagination<User>) => {
+                usersPageable.items.forEach(function (v) {delete v.password});
+                return usersPageable;
+            })
+        )
     }
 }
