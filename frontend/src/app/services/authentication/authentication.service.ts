@@ -1,16 +1,18 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map } from 'rxjs';
+import { BackendService } from '../backend/backend.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthenticationService {
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, private backendService: BackendService) { }
 
   login(email: string, password: string) {
-    return this.http.post<any>('/api/users/login', {email, password}).pipe(
+    const body = {email, password};
+    return this.backendService.login(body).pipe(
       map((token) => {
         localStorage.setItem('blog-token', token.access_token);
         return token;
